@@ -24,7 +24,7 @@ HOST_STRICT = f'(?:{S}{RE_HOSTNAME}(?={S}))?'
 NOT_HOST    = f'(?!{RE_HOSTNAME})'
 PID         = r'(?:[\[](?P<procid>[0-9]+)[\]])'
 TAG_PID     = f'(?P<app_name>.+?){PID}?:'
-MSG_BODY    = '(?P<msg>.+)'
+MSG_BODY    = '(?P<msg>(?s:.)+)'
 
 formats = [
     # Generic with optional hostname and PID:
