@@ -185,14 +185,19 @@ _db_structure = f"""
 
 
 def _ext_connect(path, disable_journal):
+    # When journal_mode = OFF, rollback is an undefined operation.
+    isolation_level = None
+    if not disable_journal:
+        # With a journal, we should use BEGIN IMMEDIATE
+        isolation_level = 'IMMEDIATE'
     path.parent.mkdir(exist_ok=True, parents=True)
     conn = sqlite3.connect(f'file:{path}?nolock=1',
                            uri=True,
-                           isolation_level=None,
-                           detect_types=sqlite3.PARSE_DECLTYPES)
+                           isolation_level=isolation_level)
     try:
+        journal_mode = 'OFF' if disable_journal else 'TRUNCATE'
         conn.executescript(
-            ('PRAGMA journal_mode = OFF;\n' if disable_journal else '') +
+            f'PRAGMA journal_mode = {journal_mode};\n' +
             _db_structure)
     except Exception:
         conn.close()
