@@ -129,9 +129,7 @@ def _logging_handler_thread(state):
         ctx.check_hostname = False
         ctx.verify_mode = ssl.VerifyMode.CERT_NONE
 
-    # keep looping until signaled that the handler is closed
     while not state.closed.is_set():
-        # connect to the endpoint
         try:
             if state.comm_type == common.CommType.UDP:
                 s = socket.socket(type=socket.SOCK_DGRAM)
@@ -153,7 +151,6 @@ def _logging_handler_thread(state):
             time.sleep(state.reconnect_delay)
             continue
 
-        # the connection was established
         msg = None
         try:
             while True:
@@ -190,7 +187,6 @@ def _logging_handler_thread(state):
                 state.queue.appendleft(msg)
 
         finally:
-            # close the connection to avoid leaking it
             with contextlib.suppress(Exception):
                 s.close()
 
