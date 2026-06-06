@@ -162,23 +162,18 @@ def _logging_handler_thread(state):
                         return
 
                     if state.dropped[0]:
-                        msg = _create_dropped_msg(
+                        msg = None
+                        dropped_msg = _create_dropped_msg(
                             state.dropped[0], '_logging_handler_thread', 0)
+                        _send_message(s, dropped_msg, state.comm_type == common.CommType.UDP)
                         state.dropped[0] = 0
+                        continue
 
                     else:
                         msg = state.queue.popleft()
 
-                msg_bytes = encoder.msg_to_str(msg).encode()
-
-                if state.comm_type == common.CommType.UDP:
-                    s.send(msg_bytes)
-
-                else:
-                    s.send(f'{len(msg_bytes)} '.encode() + msg_bytes)
-
+                _send_message(s, msg, state.comm_type == common.CommType.UDP)
                 msg = None
-                msg_bytes = None
 
         except Exception:
             # When failing with msg assigned, put the msg back.
@@ -217,6 +212,14 @@ def _record_to_msg(record):
         msgid=record.name[:32],
         data=json.encode({'hat@1': hat_data}),
         msg=record.getMessage())
+
+
+def _send_message(s, msg, only_bytes=False):
+    msg_bytes = encoder.msg_to_str(msg).encode()
+    if only_bytes:
+        s.send(msg_bytes)
+    else:
+        s.send(f'{len(msg_bytes)} '.encode() + msg_bytes)
 
 
 def _create_dropped_msg(dropped, func_name, lineno):
