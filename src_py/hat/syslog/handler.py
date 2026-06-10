@@ -154,6 +154,7 @@ def _logging_handler_thread(state):
         msg = None
         try:
             while True:
+                dropped = 0
                 with state.cv:
                     state.cv.wait_for(lambda: (state.closed.is_set() or
                                                len(state.queue) or
@@ -162,17 +163,21 @@ def _logging_handler_thread(state):
                         return
 
                     if state.dropped[0]:
-                        msg = None
-                        dropped_msg = _create_dropped_msg(
-                            state.dropped[0], '_logging_handler_thread', 0)
-                        _send_message(s, dropped_msg, state.comm_type == common.CommType.UDP)
-                        state.dropped[0] = 0
-                        continue
+                        dropped = state.dropped[0]
+                        msg = _create_dropped_msg(
+                            dropped, '_logging_handler_thread', 0)
 
                     else:
                         msg = state.queue.popleft()
 
-                _send_message(s, msg, state.comm_type == common.CommType.UDP)
+                if dropped:
+                    dropped_msg = msg
+                    msg = None
+                    _send_message(s, dropped_msg, state.comm_type == common.CommType.UDP)
+                    with state.cv:
+                        state.dropped[0] -= dropped
+                else:
+                    _send_message(s, msg, state.comm_type == common.CommType.UDP)
                 msg = None
 
         except Exception:
