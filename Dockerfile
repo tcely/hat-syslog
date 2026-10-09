@@ -1,4 +1,4 @@
-FROM python:3.11-slim-bookworm AS hat-syslog-base
+FROM python:3.12-slim-bookworm AS hat-syslog-base
 WORKDIR /hat-syslog
 RUN apt update -y
 
