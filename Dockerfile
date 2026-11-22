@@ -2,9 +2,12 @@ FROM python:3.11-slim-bookworm AS hat-syslog-base
 WORKDIR /hat-syslog
 RUN apt-get update
 
-FROM hat-syslog-base AS hat-syslog-build
+FROM hat-syslog-base AS hat-syslog-npm
 WORKDIR /hat-syslog
 RUN apt-get install -y nodejs npm
+
+FROM hat-syslog-npm AS hat-syslog-build
+WORKDIR /hat-syslog
 COPY . .
 RUN pip install --upgrade pip && \
     pip install --group dev && \
