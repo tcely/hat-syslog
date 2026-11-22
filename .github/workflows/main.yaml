@@ -17,6 +17,7 @@ jobs:
             - name: install python
               uses: actions/setup-python@v7.1.0
               with:
+                  cache: 'pip'
                   python-version-file: '.python-version'
             - name: install python requirements
               run: |
