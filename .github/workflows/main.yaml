@@ -25,9 +25,9 @@ jobs:
                   build_vendored() (
                       local dir
 
+                      mkdir -p "${1}"
                       PIP_FIND_LINKS="$(realpath "${1}")"
                       export PIP_FIND_LINKS
-                      mkdir -p "${PIP_FIND_LINKS}"
                       shift
 
                       for dir in "${@}"
@@ -57,7 +57,7 @@ jobs:
                     password: ${{ secrets.GITHUB_TOKEN }}
         with:
             build-args: |
-                IMAGE_BASE_TAG=3.14-slim-trixie
+                IMAGE_BASE_TAG=3.15-slim-trixie
             cache: true
             cache-mode: max
             meta-flavor: latest=false

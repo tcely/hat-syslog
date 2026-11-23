@@ -14,7 +14,25 @@ WORKDIR /root
 RUN pip install --upgrade pip
 WORKDIR /hat-syslog
 COPY . .
-RUN pip install --group dev && \
+SHELL ["/usr/bin/env", "bash", "--noprofile", "--norc", "-e", "-o", "pipefail", "-c"]
+RUN \
+    build_vendored() ( \
+        local dir; \
+\
+        mkdir -p "${1}"; \
+        PIP_FIND_LINKS="$(realpath "${1}")"; \
+        export PIP_FIND_LINKS; \
+        shift; \
+\
+        for dir in "${@}"; \
+        do \
+        pushd "${dir}" || continue; \
+        pip wheel --wheel-dir "${PIP_FIND_LINKS}" . || :; \
+        popd; \
+        done; \
+    ); \
+    build_vendored ./.vendor-dist vendor/hat-{aio,util,json,juggler}; \
+    pip install --find-links ./.vendor-dist --group dev . && \
     doit clean_all && \
     doit
 
@@ -22,7 +40,8 @@ FROM hat-syslog-base AS hat-syslog-run
 WORKDIR /root
 RUN --mount=type=tmpfs,target=/stages \
     --mount=type=bind,source=/hat-syslog/build,target=/stages/build,from=hat-syslog-build \
-    pip install --root-user-action=ignore /stages/build/py/*.whl
+    --mount=type=bind,source=/hat-syslog/.vendor-dist,target=/stages/build-dist,from=hat-syslog-build \
+    pip install --root-user-action=ignore /stages/build/py/*.whl /stages/build-dist/*.whl
 
 WORKDIR /hat-syslog
 VOLUME /hat-syslog
